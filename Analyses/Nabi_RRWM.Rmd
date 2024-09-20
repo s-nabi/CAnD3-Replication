@@ -1,0 +1,410 @@
+---
+title: "Factors Impacting Self-Rated Mental Health of Individuals in Canada"
+subtitle: "2017 General Social Survey (GSS) for Canada"
+author: "Shabnoor Nabi"
+header-includes:
+  - \usepackage{float}
+  - \floatplacement{figure}{H}
+date: "Sept/20/2024"
+output: 
+  html_document:
+    number_sections: yes
+    toc: true
+    theme: united
+editor_options: 
+  markdown: 
+    wrap: 72
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE, eval = TRUE, message = FALSE, warning = FALSE)
+```
+
+# STUDY OVERVIEW 
+
+Examining the effects of place of birth on individuals' self-rated mental health (while controlling for/holding constant age, gender, and marital status) based on the Canadian GSS 2017
+
+# PACKAGES
+
+```{r}
+##Load the following packages to successfully run the code in this file
+
+#Un-comment and install the following packages if not already loaded
+# install.packages("tidyverse")
+# install.packages("rio")
+# install.packages("dplyr")
+# install.packages("gtsummary")
+# install.packages("webshot2")
+# install.packages("huxtable")
+# install.packages ("webshot")
+
+#load packages
+library(tidyverse)
+library(rio)
+library(dplyr)
+library(gtsummary)
+library(webshot2)
+library(huxtable)
+library(webshot)
+```
+
+# DATA: 2017 General Social Survey, Canada
+
+```{r}
+##Import the data file "gss-2017-CAN" 
+GSS_2017 = rio::import("../Data-Raw/gss-12M0025-E-2017-c-31_F1.csv")
+
+nrow(GSS_2017)
+#The sample size without omitting the missing values across variables of interest is 20602
+```
+
+# DATA CLEANING AND MANAGEMENT
+
+To prepare the data for analyses, first turn the values from 6-9 (where, 6 = Valid skip, 7 = Don't know, 8 = Refusal, and 9 = Not stated) within all variables of interest into NAs and rename the variables. Also, turn categorical variables into binary/dummy and classify them as factor wherever necessary.
+
+## Outcome/Dependent Variable: Self-rated mental health (SRH_115 in codebook)
+
+
+```{r}
+# View the distribution of D.V.
+table(GSS_2017$SRH_115) 
+
+#Turning values 6-9 into NAs and renaming the variable as "SR_health"
+GSS_2017$SR_MH <- ifelse(test = GSS_2017$SRH_115 == 6 | GSS_2017$SRH_115 == 7 | GSS_2017$SRH_115 == 8 | GSS_2017$SRH_115 == 9, yes = NA, no = GSS_2017$SRH_115)
+
+table(GSS_2017$SR_MH)
+
+#reverse coding the values so higher numbers indicate better self-rated health
+
+#subsetting polcon items that need to be reverse coded
+revitem = c("SR_MH")
+
+#reverse coding the subsetted items on 1-5 scale so that the higher number represent inverse
+GSS_2017[ ,revitem] = 6 - GSS_2017[ ,revitem]
+
+##checking if reverse worked
+table(GSS_2017$SR_MH)
+class(GSS_2017$SR_MH)
+
+# creating a separate factor variable for SR_health 
+GSS_2017$SR_MH_R = factor(GSS_2017$SR_MH , levels = c(1,2,3,4,5) , labels = c("Poor", "Fair", "Good", "Very Good", "Excellent"))
+
+table(GSS_2017$SR_MH_R)
+class(GSS_2017$SR_MH_R)
+
+```
+
+
+## Explanatory/Independent Variables
+
+### A. Place of birth of respondent (BRTHCAN from code book)
+```{r}
+# View the distribution of the variable of interest
+table(GSS_2017$BRTHCAN)
+
+#Turning 6-9 values into NAs and renaming the variable as "PoBirth"
+GSS_2017$immigrant <- ifelse(test = GSS_2017$BRTHCAN == 7 | GSS_2017$BRTHCAN == 8 | GSS_2017$BRTHCAN == 9, yes = NA, no = GSS_2017$BRTHCAN)
+table(GSS_2017$immigrant)
+
+##Recoding the above as a dummy for "Immigrant" individuals and classifying it as factor
+GSS_2017$immigrant <- factor(ifelse(test = GSS_2017$immigrant == 2, yes = 1, no = 0), labels = c("Canada", "Outside Canada"))
+
+table(GSS_2017$immigrant)
+class(GSS_2017$immigrant)
+```
+
+### B. Age of the respondent at the time of survey (AGEC from code book)
+```{r}
+#View the distribution of the variable of interest
+table(GSS_2017$AGEC)
+
+```
+
+### C. Sex of respondent (SEX from code book)
+```{r}
+#View the distribution of the variable of interest
+table(GSS_2017$SEX) 
+
+#Recoding sex as a dummy variable "SEXCAT" for 'females,' classifying it as factor, and renaming it as "female"
+GSS_2017$female <- factor(ifelse(test = GSS_2017$SEX == 2, yes = 1, no = 0), labels = c("Males", "Females"))
+table(GSS_2017$female)
+class(GSS_2017$female)
+```
+
+### D. Marital status of the respondent (MARSTAT from code book) 
+```{r}
+#View the distribution 
+table(GSS_2017$MARSTAT) 
+
+#Turning 97 and 98 values into NAs and renaming the variable as "maritalstat"
+GSS_2017$maritalstat <- ifelse(test = GSS_2017$MARSTAT == 97 | GSS_2017$MARSTAT == 98, yes = NA, no = GSS_2017$MARSTAT)
+
+table(GSS_2017$maritalstat)
+
+##Recoding the above as a dummy for "married" and common-law individuals and classifying it as factor
+GSS_2017 <- GSS_2017 %>%
+  mutate(marr_cohab=case_when(
+    maritalstat %in% 3:6 ~ 0,
+    maritalstat %in% 1:2 ~ 1))
+
+GSS_2017$marr_cohab <- factor(GSS_2017$marr_cohab,
+levels = c(0,1),
+labels = c("Other", "Married/Cohabiting"))
+
+table(GSS_2017$marr_cohab)
+class(GSS_2017$marr_cohab)
+
+```
+
+## Sub-setting dataframe for main analyses and dropping NAs
+
+```{r}
+#Sub-setting the dataframe to variable of interest and omitting missing values across all
+df_GSS2017 <- na.omit(subset(GSS_2017,  select=c(immigrant, SR_MH, SR_MH_R, female, marr_cohab, AGEC)))
+
+nrow(df_GSS2017)
+#The sample size after omitting the missing values across variables of interest is 20360
+```
+
+# DESCRIPTIVE STATISTICS
+
+```{r}
+
+df_GSS2017 %>% 
+  select(immigrant, SR_MH, SR_MH_R, female, marr_cohab, AGEC) %>%  # keep only the columns of interest
+  tbl_summary(     
+    by = SR_MH,                                         # stratify entire table by outcome
+    statistic = list(all_continuous() ~ "{mean} ({sd})",        # stats and format for continuous columns
+                     all_categorical() ~ "{n} / {N} ({p}%)"),   # stats and format for categorical columns
+    digits = all_continuous() ~ 1,                              # rounding for continuous columns
+    type   = all_categorical() ~ "categorical",                 # force all categorical levels to display
+    label  = list(                                              # display labels for column names
+      SR_MH_R   ~ "Self-rated mental health",                           
+      AGEC ~ "Age (years)",
+      female    ~ "Sex",
+      marr_cohab      ~ "Married/Cohabiting",
+      immigrant  ~ "Place of birth"))%>%
+  as_gt() |>  # convert to gt table
+  gt::gtsave( # save table as image
+    filename = "../Figures/descriptive_stats.png"
+  )
+
+```
+
+# ANALYSES
+
+Let's first do a series of simple linear bivariate analysis without any controls
+
+A) Place of Birth & Self-rated mental health
+
+```{r}
+#Running linear regression for place of birth (I.V.) and self-rated mental health (D.V.)
+mod1_BV <- lm(SR_MH ~ immigrant, data = df_GSS2017) 
+# printing results
+summary(mod1_BV)
+```
+
+```{r, figA, fig.height = 4, fig.width = 7, fig.align = "center"}
+##Plot the association between self-rated mental health by immigration status using bar chart
+FigA <- mod1_BV %>%
+  ggplot(aes(SR_MH, fill = immigrant)) +
+  geom_bar(position = 'dodge') +
+  theme_bw() +
+    labs(title = "Self-rated mental health by place of birth",
+       subtitle = "GSS 2017, Canada (subset)",
+       x = "Self-rated Mental Health: Poor (1) - Excellent (5)",
+       y = "Frequency",
+       fill = "Place of Birth")
+
+#print barchart
+FigA
+
+
+#Saving fig.A as image
+ggsave("../Figures/FigA.png")
+
+##Uncomment to plot the association between self-rated mental health by immigration status using bar chart [with proportions]
+# prop_table1 <- df_GSS2017 %>% 
+#   group_by(immigrant, SR_MH_R) %>% 
+#   tally() %>% 
+#   group_by(immigrant) %>% 
+#   mutate(prop = n/sum(n))
+# 
+# Fig1 <- ggplot(data = prop_table1, aes(immigrant, fill = SR_MH_R, y = prop)) + geom_bar(stat = "identity")  + labs(title = "Self-rated mental health by place of birth",
+#                                                                                                                     fill = "Self-rated Mental Health: Excellent(5) - Poor(1)",
+#                                                                                                                     subtitle = "GSS 2017, Canada (subset)",
+#                                                                                                                     x = "Place of Birth",
+#                                                                                                                     y = "Self-rated mental health (prop)")
+# 
+# #Saving fig.2 as image
+# ggsave("../Figures/Fig1.png")
+# 
+# Fig1
+```
+
+
+B) Gender & Self-rated mental health
+
+```{r}
+##Running Bivariate regression for Sex (female) (I.V.) and SR_MH (D.V.)
+mod2_female <- lm(SR_MH ~ female, data = df_GSS2017) 
+# printing results
+summary(mod2_female)
+```
+
+Let's plot and save the graph
+
+```{r, figB, fig.height = 4, fig.width = 7, fig.align = "center"}
+#Plotting self-rated mental health by SEX category using bar chart
+
+FigB <- df_GSS2017 %>% 
+  ggplot(aes(SR_MH, fill = female)) +
+  geom_bar(position = 'dodge') +
+  theme_bw() +
+    labs(title = "Self-rated mental health by sex", 
+       subtitle = "GSS 2017, Canada (subset)",
+       x = "Self-rated Mental Health: Poor(1) - Excellent(5)",
+       y = "Frequency",
+       fill = "Sex")
+
+#print barchart
+FigB 
+
+#Saving fig.3 as image
+ggsave("../Figures/FigB.png")
+
+
+##Uncomment to plot the association between self-rated mental health by sex using bar chart [with proportions]
+# prop_table2 <- df_GSS2017 %>% 
+#   group_by(female, SR_MH_R) %>% 
+#   tally() %>% 
+#   group_by(female) %>% 
+#   mutate(prop = n/sum(n))
+# 
+# Fig2 <- ggplot(data = prop_table2, aes(female, fill = SR_MH_R, y = prop)) + geom_bar(stat = "identity")  + labs(title = "Self-rated mental health by immigrant status",
+#                                                                                                                     fill = "Self-rated Mental Health: Excellent(5) - Poor(1)",
+#                                                                                                                     subtitle = "GSS 2017, Canada (subset)",
+#                                                                                                                     x = "Sex",
+#                                                                                                                     y = "Self-rated mental health (prop)")
+# 
+# #Saving fig.2 as image
+# ggsave("../Figures/Fig2.png")
+# 
+# Fig2
+```
+
+
+
+C) Marriage/Cohabitation & self rated mental health
+
+```{r}
+##Running Bivariate regression for marriage/cohabitation and self-rated mental health (D.V.)
+mod3_marstat <- lm(SR_MH ~ marr_cohab, data = df_GSS2017) 
+#printing results 
+summary(mod3_marstat)
+
+```
+
+Let's plot and save the graph
+
+```{r, echo=FALSE, figC, fig.height = 4, fig.width = 7, fig.align = "center"}
+
+#Plotting self-rated mental health by marriage/cohabition category using bar chart
+
+FigC <- df_GSS2017 %>% 
+  ggplot(aes(SR_MH_R, fill = marr_cohab)) +
+  geom_bar(position = 'dodge') +
+  theme_bw() +
+    labs(title = "Self-rated mental health by marital/cohab status", 
+       subtitle = "GSS 2017, Canada (subset)",
+       x = "Self-rated Mental Health: Poor(1) - Excellent(5)",
+       y = "Frequency",
+       fill = "Relationship Status")
+
+#print barchart
+FigC
+
+#Saving fig.C as image
+ggsave("../Figures/FigC.png")
+
+
+##Uncomment to plot the association between self-rated mental health by marriage/cohabiting status using bar chart [with proportions]
+# prop_table3 <- df_GSS2017 %>% 
+#   group_by(marr_cohab, SR_MH_R) %>% 
+#   tally() %>% 
+#   group_by(marr_cohab) %>% 
+#   mutate(prop = n/sum(n))
+# 
+# Fig3 <- ggplot(data = prop_table3, aes(marr-cohab, fill = SR_MH_R, y = prop)) + geom_bar(stat = "identity")  + labs(title = "Self-rated mental health by marital/Cohab status",
+#                                                                                                                     fill = "Self-rated Mental Health: Excellent(5) - Poor(1)",
+#                                                                                                                     subtitle = "GSS 2017, Canada (subset)",
+#                                                                                                                     x = "Marital Status",
+#                                                                                                                     y = "Self-rated mental health (prop)")
+# 
+# #Saving fig.3 as image
+# ggsave("../Figures/Fig3.png")
+# 
+# Fig3
+
+```
+
+D) Age & self rated mental health
+
+```{r, figD, fig.height = 4, fig.width = 7, fig.align = "center"}
+##Running Bivariate regression for Age (I.V.) and self-rated mental health (D.V.)
+mod4_age <- lm(SR_MH ~ AGEC, data = df_GSS2017) 
+#printing results 
+summary(mod4_age)
+
+# Boxplot
+FigD <- ggplot(data = df_GSS2017, aes(x = SR_MH_R, y = AGEC, fill = SR_MH_R)) + 
+    geom_boxplot() +
+    labs(title = "Self-rated mental health by age",
+         x = "Self rated mental health", 
+         y = "Age of respondent") +
+    guides(fill = FALSE) 
+
+#Saving fig.D as image
+ggsave("../Figures/FigD.png")
+
+FigD
+```
+
+
+
+```{r}
+# Q.Does migration/immigrant status affect self-rated mental health, while holding constant marriage/cohabitation status, sex (female), and age?   
+
+# Multivariate Regression
+MVR1 <- lm(SR_MH ~ immigrant + marr_cohab + female + AGEC, data = df_GSS2017) 
+#printing results of the multivariate regression
+summary(MVR1)
+```
+
+```{r}
+my_hux = huxreg(mod1_BV, MVR1, coefs = c(
+  "(Intercept)" = "(Intercept)", 
+  "Immigrant" = "immigrantOutside Canada", 
+  "Married/Cohabiting" = "marr_cohabMarried/Cohabiting", 
+  "Female" = "femaleFemales", 
+  "Age" = "AGEC"),     
+  note = "{stars}. Standard error in parentheses.", tidy_args = list(exponentiate = TRUE), bold_signif = 0.05, statistics = "BIC") %>% 
+      set_caption("Bivariate (1) vs. Multivariate (2) Regression Results") %>% 
+  set_align(1, everywhere, "center")
+
+quick_html(my_hux, file = "regtable.html", open = FALSE)
+# higher zoom increases resolution and image size
+#run 
+webshot::install_phantomjs() #for this to work
+webshot::webshot(url = "regtable.html", file = "../Figures/regtable.png",
+                 zoom = 5, selector = "table")
+
+```
+
+
+
+
+
+
+
+

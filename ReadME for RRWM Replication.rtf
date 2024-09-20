@@ -1,0 +1,59 @@
+{\rtf1\ansi\ansicpg1252\cocoartf2818
+\cocoatextscaling0\cocoaplatform0{\fonttbl\f0\froman\fcharset0 Times-Bold;\f1\froman\fcharset0 Times-Roman;\f2\froman\fcharset0 Times-Italic;
+}
+{\colortbl;\red255\green255\blue255;\red255\green255\blue255;}
+{\*\expandedcolortbl;;\cssrgb\c100000\c100000\c100000;}
+{\*\listtable{\list\listtemplateid1\listhybrid{\listlevel\levelnfc1\levelnfcn1\leveljc0\leveljcn0\levelfollow0\levelstartat1\levelspace360\levelindent0{\*\levelmarker \{upper-roman\}.}{\leveltext\leveltemplateid1\'02\'00.;}{\levelnumbers\'01;}\fi-360\li720\lin720 }{\listname ;}\listid1}}
+{\*\listoverridetable{\listoverride\listid1\listoverridecount0\ls1}}
+\margl1440\margr1440\vieww11520\viewh8400\viewkind0
+\deftab720
+\pard\pardeftab720\partightenfactor0
+
+\f0\b\fs28 \cf0 \cb2 \expnd0\expndtw0\kerning0
+Replication Project:
+\f1\b0  Factors Impacting Self-Rated Mental Health of Individuals in Canada\
+\
+This project is for anyone interested in reviewing and reproducing the analyses tracing the impact of key factors like a) Place of birth (used as proxy for migrant status), b) gender, c) marital status, and d) age, on the self-rated mental health of individuals in Canada based on the 2017 General Social Survey (GSS) data for Canada.\
+\
+
+\f0\b Installations and Software Requirement:\
+
+\f1\b0 This project was built and run on an RMarkdown file in RStudio\'92s Mac Version 2023.06.1+524 (2023.06.1+524) and would typically require the equivalent of it to be reproduced using the same code.\
+\
+
+\f0\b Data and Code Availability Statement:\
+\
+
+\f1\b0 Data used for the present project were obtained through ODESI, a service provided by the Ontario Council of University Libraries (https://search1.odesi.ca/#/Links to an external site.). Access is restricted to those users who have a DLI License and can be used for statistical and research purposes. The terms of the license can be viewed here (https://www.statcan.gc.ca/eng/dli/licenceLinks to an external site.). \
+\
+As part of McGill University, the CAnD3 initiative has a license to use the data for the purposes of training. Those outside of McGill university should not use the data provided through CAnD3's training activities for purposes not related to the CAnD3 training. \
+\
+
+\f0\b GSS data citation:
+\f1\b0  Statistics Canada. 2020. General Social Survey, Cycle 31, 2017 [Canada]: Family (version 2020-09). Statistics Canada [producer and distributor], accessed September 10, 2021. ID: gss-12M0025-E-2017-c-31\
+
+\f0\b \
+Folder Structure and Steps for Reproducing Analyses:\
+
+\f1\b0 The Github repository \'93{\field{\*\fldinst{HYPERLINK "https://github.com/s-nabi/CAnD3-Replication"}}{\fldrslt CAnD3-Replication}}\'94 contains three folders namely, 1) Analyses, 2) Data-Raw (contains the zipped folder "GSS 2017 - Family, Cycle 31.zip\'94 with data file in .csv format as well as the codebook for GSS 2017), and 3) Figures (contains graphs/plots as images in .png format). The root version of the GSS 2017\'92s codebook is also present in the analyses folder and can be referred to as and when needed for further information on the variables of interest. \
+\
+The file \'93
+\f2\i Nabi_RRWM.Rmd
+\f1\i0 \'94 can be found in the \'93Analyses\'94 folder and contains all the code (with appropriate annotations) needed to reproduce the analyses and figures for the current project. Moreover, the entire .Rmd code file is also present within the Analyses folder as a knitted HTML document \'93
+\f2\i Nabi_RRWM.html
+\f1\i0 \'94 with table of content for the user\'92s ease of view and reference.\
+\
+Once a) all three folders are downloaded, b) data file within the data-raw folder is unzipped, and c) the .Rmd analyses file is set to run with all chunks in RStudio, it should:\
+\
+\pard\tx220\tx720\pardeftab720\li720\fi-720\partightenfactor0
+\ls1\ilvl0\cf0 \kerning1\expnd0\expndtw0 {\listtext	I.	}\expnd0\expndtw0\kerning0
+Directly import the raw-data file \'93
+\f2\i GSS 2017 - Family, Cycle 31.csv
+\f1\i0 \'94 from the \'93Data-Raw\'94 folder into the RStudio environment, and \
+\ls1\ilvl0\kerning1\expnd0\expndtw0 {\listtext	II.	}Automatically \expnd0\expndtw0\kerning0
+save all produced graphs as images (.png) into the \'93Figures\'94 folder. \
+\pard\pardeftab720\partightenfactor0
+\cf0 \
+While basic information related to the variables of interest is annotated as part of the code file, anyone reproducing the analyses for the current project is highly encouraged to use the \'93
+\f0\b \ul Researcher Program_RRWM Replication
+\f1\b0 \ulnone \'94 in this Git repository and the available GSS 2017 codebook for the ease of replication. Lastly, the code that produces and saves the graphs as images works successfully when executed in RStudio, so the same plots can also be viewed directly in there. }
